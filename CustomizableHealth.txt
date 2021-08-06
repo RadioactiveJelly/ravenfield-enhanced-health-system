@@ -1,0 +1,93 @@
+﻿-- Register the behaviour
+behaviour("CustomizableHealth")
+
+function CustomizableHealth:Start()
+	-- Run when behaviour is created
+	print("Hello World")
+	Player.actor.onTakeDamage.AddListener(self,"onTakeDamage")
+	GameEvents.onActorSpawn.AddListener(self,"onActorSpawn")
+
+	self.healTimer = self.script.mutator.GetConfigurationFloat("healTimer")
+	self.healInterval = self.script.mutator.GetConfigurationFloat("healInterval")
+	self.healValue = self.script.mutator.GetConfigurationFloat("healValue")
+	self.maxHP = self.script.mutator.GetConfigurationInt("maxHP")
+	self.doRegen = self.script.mutator.GetConfigurationBool("doRegen")
+	self.isPercent = self.script.mutator.GetConfigurationBool("isPercent")
+
+	self.image = self.targets.Flash
+
+	self.healIntervalTimer = 0
+	self.playerActor = Player.actor
+	self.playerActor.maxHealth = self.maxHP
+
+	if self.isPercent then
+		self.healValue = self.healValue/100
+	end
+
+	self.isStimmed = false
+	self.stimDuration = 5
+	self.stimTimer = 0
+
+	--self.targets.CanvasRenderer.setAlpha(0.01)
+end
+
+function CustomizableHealth:Update()
+	-- Run every frame
+	if(Input.GetKeyDown(KeyCode.P)) then
+		self.playerActor.damage(10)
+	end
+
+	if self.doRegen then
+		if(self.playerActor.isDead == false and self.healTimer > 5 and self.playerActor.health < self.maxHP) then
+			if(self.healIntervalTimer < self.healInterval) then
+				self.healIntervalTimer = self.healIntervalTimer + Time.deltaTime
+			else
+				if self.isPercent == false then
+					self.playerActor.health = self.playerActor.health + self.healValue
+				else
+					self.playerActor.health = self.playerActor.health + (self.maxHP * self.healValue)
+				end
+				self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.maxHP)
+				self.healIntervalTimer = 0
+			end
+		elseif self.playerActor.isDead == false and self.healTimer <= 5 and self.playerActor.health < self.maxHP then
+			self.healTimer = self.healTimer + (2 * Time.deltaTime)
+		end
+	end
+
+	if self.isStimmed and self.stimTimer < self.stimDuration and self.playerActor.health < self.maxHP then
+		self.stimTimer = self.stimTimer + Time.deltaTime
+		self.playerActor.health = self.playerActor.health + (self.maxHP * self.healValue * 2 * Time.deltaTime)
+		self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.maxHP)
+		if(self.stimTimer >= self.stimDuration) then
+			self.stimTimer = 0
+			self.isStimmed = false
+		end
+	end
+end
+
+function CustomizableHealth:onTakeDamage(actor,source,info)
+	self.healTimer = 0
+	self.healIntervalTimer = 0
+end
+
+function CustomizableHealth:onActorSpawn(actor)
+	if(actor == self.playerActor) then
+		self.healTimer = 0
+		self.healIntervalTimer = 0
+		for i, weapon in ipairs(self.playerActor.weaponSlots) do
+			if weapon.weaponEntry.name == "Stim Shot" then
+				weapon.onFire.AddListener(self,"onStim")
+			end
+		end
+	end
+end
+
+function CustomizableHealth:onStim()
+	self.isStimmed = true
+	self.stimTimer = 0
+	
+	--self.targets.CanvasRenderer.setAlpha(1)
+	--self.image.CrossFadeAlpha(0,1,false)
+	print("STIM")
+end

@@ -1,0 +1,15 @@
+﻿-- Register the behaviour
+behaviour("StimShot")
+
+
+
+function StimShot:Start()
+	self.targets.Stim.GetComponent(Weapon).onFire.addListener(self,"onFire")
+end
+
+function StimShot:onFire()
+	if(enhancedHealthInstance) then
+		enhancedHealthInstance:onStim(true,true,true)
+	end
+end
+
