@@ -3,6 +3,10 @@ behaviour("EnhancedHealth")
 
 enhancedHealthInstance = nil
 
+function EnhancedHealth:Awake()
+	self.gameObject.name = "EnhancedHealth"
+end
+
 function EnhancedHealth:Start()
 	-- Run when behaviour is created
 	Player.actor.onTakeDamage.AddListener(self,"onTakeDamage")
@@ -57,7 +61,7 @@ function EnhancedHealth:Start()
 
 	print("<color=green>[Enhanced Health] Stims will heal " .. self.stimHealAmount .. " health points</color>")
 	print("<color=green>[Enhanced Health] Set player max health to " .. self.maxHP .. " HP</color>")
-	self.gameObject.name = "EnhancedHealth"
+	
 	self.targets.AudioSource.SetOutputAudioMixer(AudioMixer.FirstPerson)
 
 	self.fadeAlpha = 0
@@ -132,6 +136,7 @@ function EnhancedHealth:Update()
 
 		if self.isSpeedBoosted and self.speedBoostTimer <= self.speedBoostTimer then
 			self.speedBoostTimer = self.speedBoostTimer + Time.deltaTime
+			self.playerActor.speedMultiplier = self.speedBoost
 			if(self.speedBoostTimer > self.speedBoostDuration) then
 				print("<color=yellow>[Enhanced Health] Speed boost over!</color>")
 				self.playerActor.speedMultiplier = 1
@@ -275,7 +280,6 @@ function EnhancedHealth:onStim(doSound, doOverheal, doSpeedBoost)
 	self.isStimmed = true
 	self.stimTimer = 0
 
-	
 	self.playerActor.maxBalance = 200
 	self.playerActor.balance = 200
 
