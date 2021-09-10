@@ -158,6 +158,10 @@ function EnhancedHealth:Update()
 	end
 end
 
+function EnhancedHealth:OnDisable()
+	enhancedHealthInstance = nil
+end
+
 function EnhancedHealth:updateVignette(scale)
 	local color = self.targets.Vignette.color
 	color.a = scale
@@ -165,6 +169,10 @@ function EnhancedHealth:updateVignette(scale)
 end
 
 function EnhancedHealth:onTakeDamage(actor,source,info)
+	if(CurrentEvent.isConsumed) then
+		return
+	end
+	
 	self.healTimer = 0
 	self.healIntervalTimer = 0
 
