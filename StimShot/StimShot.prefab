@@ -1132,7 +1132,7 @@ MonoBehaviour:
     ammo: 1
     spareAmmo: 1
     resupplyNumber: 1
-    reloadTime: 2
+    reloadTime: 0
     cooldown: 0.2
     unholsterTime: 0
     unholsterIsReload: 0

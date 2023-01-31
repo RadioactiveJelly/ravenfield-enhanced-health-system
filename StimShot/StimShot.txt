@@ -9,7 +9,7 @@ end
 
 function StimShot:onFire()
 	if(enhancedHealthInstance) then
-		enhancedHealthInstance:onStim(true,true,true)
+		enhancedHealthInstance:onStim(true,true,enhancedHealthInstance.doSpeedBoost)
 	end
 end
 

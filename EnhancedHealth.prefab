@@ -133,8 +133,8 @@ MonoBehaviour:
         displayName: Stim Regen Buff
         orderPriority: 10
         value: 1
-      - id: doStimSpeedBost
-        displayName: Stim Speed Bosst Buff
+      - id: doStimSpeedBoost
+        displayName: Stim Speed Boost Buff
         orderPriority: 15
         value: 1
       - id: doVignette
