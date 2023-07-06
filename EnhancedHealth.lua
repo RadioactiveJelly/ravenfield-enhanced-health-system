@@ -64,6 +64,7 @@ function EnhancedHealth:Start()
 	print("<color=green>[Enhanced Health] Set player max health to " .. self.maxHP .. " HP</color>")
 	
 	self.targets.AudioSource.SetOutputAudioMixer(AudioMixer.FirstPerson)
+	self.targets.Heartbeat.SetOutputAudioMixer(AudioMixer.FirstPerson)
 
 	self.fadeAlpha = 0
 	self.hasSpawned = false
@@ -86,6 +87,8 @@ function EnhancedHealth:Start()
 
 	self.isSpawnUiOpen = false
 
+	self.heartBeatTimer = 0
+
 	enhancedHealthInstance = self
 	self.script.AddValueMonitor("monitorHUDVisibility", "onHUDVisibilityChange")
 end
@@ -96,11 +99,22 @@ function EnhancedHealth:Update()
 	-- Run every frame
 	if self.playerActor and self.playerActor.isDead == false then
 
+		--[[if(Input.GetKeyDown(KeyCode.T)) then
+			Player.actor.damage(Player.actor,50,0, false ,false)
+		end]]--
+
 		if SpawnUi.isOpen and not self.isSpawnUiOpen then
 			self.isSpawnUiOpen = true
 		elseif not SpawnUi.isOpen and self.isSpawnUiOpen then
 			self.isSpawnUiOpen = false
 			self:EvaluateLoadout()
+		end
+
+		if self.playerActor.health/self.maxHP <= 0.35 and self.heartBeatTimer <= 0 then
+			self.heartBeatTimer = 1
+			self.targets.Heartbeat.Play()
+		else
+			self.heartBeatTimer = self.heartBeatTimer - Time.deltaTime
 		end
 
 
