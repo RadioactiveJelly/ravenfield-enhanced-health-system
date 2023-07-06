@@ -97,9 +97,9 @@ function EnhancedHealth:Update()
 	-- Run every frame
 	if self.playerActor and self.playerActor.isDead == false then
 
-		if(Input.GetKeyDown(KeyCode.T)) then
+		--[[if(Input.GetKeyDown(KeyCode.T)) then
 			Player.actor.damage(Player.actor,75,0, false ,false)
-		end
+		end]]--
 
 		if SpawnUi.isOpen and not self.isSpawnUiOpen then
 			self.isSpawnUiOpen = true
