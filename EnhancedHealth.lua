@@ -14,12 +14,10 @@ function EnhancedHealth:Start()
 	GameEvents.onActorDied.AddListener(self,"onActorDied")
 
 	self.healDelay = self.script.mutator.GetConfigurationFloat("healDelay")
-	self.healInterval = self.script.mutator.GetConfigurationFloat("healInterval")
-	self.healValue = self.script.mutator.GetConfigurationFloat("healValue")
+	self.percentHpPerTick = self.script.mutator.GetConfigurationFloat("percentHpPerTick")/100
 	self.maxHP = self.script.mutator.GetConfigurationInt("maxHP")
 	self.doRegen = self.script.mutator.GetConfigurationBool("doRegen")
-	self.isPercent = self.script.mutator.GetConfigurationBool("isPercent")
-	self.doQuickAnim = self.script.mutator.GetConfigurationBool("doQuickAnim")
+	self.doQuickAnim = false
 	self.stimHeal = self.script.mutator.GetConfigurationFloat("stimHeal")
 	self.stimDuration = self.script.mutator.GetConfigurationFloat("stimDuration")
 	self.stimOverheal = self.script.mutator.GetConfigurationInt("stimOverheal")
@@ -30,6 +28,7 @@ function EnhancedHealth:Start()
 	self.doFadeToBlack = self.script.mutator.GetConfigurationBool("doFadeToBlack")
 	self.doStimFlash = self.script.mutator.GetConfigurationBool("doStimFlash")
 	self.vignetteStyle = self.script.mutator.GetConfigurationDropdown("vignetteStyle")
+	self.regenCap = self.script.mutator.GetConfigurationRange("regenCapPercent") * self.maxHP
 
 	self.bandageDoOverHeal = self.script.mutator.GetConfigurationBool("bandageDoOverHeal")
 	self.bandageDoSpeedBoost = self.script.mutator.GetConfigurationBool("bandageDoSpeedBoost")
@@ -40,16 +39,15 @@ function EnhancedHealth:Start()
 
 	self.image = self.targets.Flash
 
-	self.healIntervalTimer = 0
 	self.playerActor = Player.actor
 	self.playerActor.maxHealth = self.maxHP
 
-	if self.isPercent then
-		self.healValue = (self.healValue/100) * self.maxHP
-	end
+	self.HPT = self.maxHP * self.percentHpPerTick
 
 	self.isStimmed = false
 	self.stimTimer = 0
+
+	self.heartBeatThreshold = self.maxHP * 0.5
 
 	
 	self.speedBoostTimer = 0
@@ -99,9 +97,9 @@ function EnhancedHealth:Update()
 	-- Run every frame
 	if self.playerActor and self.playerActor.isDead == false then
 
-		--[[if(Input.GetKeyDown(KeyCode.T)) then
-			Player.actor.damage(Player.actor,50,0, false ,false)
-		end]]--
+		if(Input.GetKeyDown(KeyCode.T)) then
+			Player.actor.damage(Player.actor,75,0, false ,false)
+		end
 
 		if SpawnUi.isOpen and not self.isSpawnUiOpen then
 			self.isSpawnUiOpen = true
@@ -110,54 +108,9 @@ function EnhancedHealth:Update()
 			self:EvaluateLoadout()
 		end
 
-		if self.playerActor.health/self.maxHP <= 0.35 and self.heartBeatTimer <= 0 then
-			self.heartBeatTimer = 1
-			self.targets.Heartbeat.Play()
-		else
-			self.heartBeatTimer = self.heartBeatTimer - Time.deltaTime
-		end
-
-
-		if self.doRegen then
-			if(self.healTimer > self.healDelay and self.playerActor.health < self.maxHP) then
-				if(self.healIntervalTimer < self.healInterval) then
-					self.healIntervalTimer = self.healIntervalTimer + Time.deltaTime
-				else
-					if(self.healInterval > 0) then
-						self.playerActor.health = self.playerActor.health + self.healValue
-					elseif(self.healInterval <= 0) then
-						self.playerActor.health = self.playerActor.health + (10 * self.healValue * Time.deltaTime)
-					end
-					self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.maxHP)
-					self.healIntervalTimer = 0
-				end
-			elseif self.healTimer <= self.healDelay and self.playerActor.health < self.maxHP then
-				self.healTimer = self.healTimer + (1 * Time.deltaTime)
-			end
-		end
-	
-		if self.isStimmed and self.stimTimer <= self.stimDuration then
-			self.stimTimer = self.stimTimer + Time.deltaTime
-			if self.playerActor.health < self.overHealMax then
-				self.playerActor.health = self.playerActor.health + (self.stimHealPerSecond * Time.deltaTime)
-				self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.overHealMax)
-			end
-			if(self.stimTimer > self.stimDuration) then
-				print("<color=yellow>[Enhanced Health] Stim regen done!</color>")
-				self.stimTimer = 0
-				self.isStimmed = false
-			end
-		end
-
-		if self.isSpeedBoosted and self.speedBoostTimer <= self.speedBoostTimer then
-			self.speedBoostTimer = self.speedBoostTimer + Time.deltaTime
-			self.playerActor.speedMultiplier = self.speedBoost
-			if(self.speedBoostTimer > self.speedBoostDuration) then
-				print("<color=yellow>[Enhanced Health] Speed boost over!</color>")
-				self.playerActor.speedMultiplier = 1
-				self.isSpeedBoosted = false
-			end
-		end
+		self:HealthRegen()
+		self:SpeedBoost()
+		self:Heartbeat()
 
 		if(self.playerActor.maxHealth > self.maxHP and self.isStimmed == false) then
 			self.playerActor.maxHealth = self.playerActor.health
@@ -207,6 +160,42 @@ function EnhancedHealth:onTakeDamage(actor,source,info)
 
 	if(balanceAfterEvent <= 100 and self.playerActor.maxBalance == 200) then
 		self.playerActor.maxBalance = 100
+	end
+end
+
+function EnhancedHealth:HealthRegen()
+	if self.doRegen then
+		if(self.healTimer > self.healDelay and self.playerActor.health < self.regenCap) then
+			self.playerActor.health = self.playerActor.health + (self.HPT * Time.deltaTime)
+			self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.maxHP)
+		elseif self.healTimer <= self.healDelay and self.playerActor.health < self.maxHP then
+			self.healTimer = self.healTimer + (1 * Time.deltaTime)
+		end
+	end
+
+	if self.isStimmed and self.stimTimer <= self.stimDuration then
+		self.stimTimer = self.stimTimer + Time.deltaTime
+		if self.playerActor.health < self.overHealMax then
+			self.playerActor.health = self.playerActor.health + (self.stimHealPerSecond * Time.deltaTime)
+			self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.overHealMax)
+		end
+		if(self.stimTimer > self.stimDuration) then
+			print("<color=yellow>[Enhanced Health] Stim regen done!</color>")
+			self.stimTimer = 0
+			self.isStimmed = false
+		end
+	end
+end
+
+function EnhancedHealth:SpeedBoost()
+	if self.isSpeedBoosted and self.speedBoostTimer <= self.speedBoostTimer then
+		self.speedBoostTimer = self.speedBoostTimer + Time.deltaTime
+		self.playerActor.speedMultiplier = self.speedBoost
+		if(self.speedBoostTimer > self.speedBoostDuration) then
+			print("<color=yellow>[Enhanced Health] Speed boost over!</color>")
+			self.playerActor.speedMultiplier = 1
+			self.isSpeedBoosted = false
+		end
 	end
 end
 
@@ -344,4 +333,15 @@ end
 
 function EnhancedHealth:onHUDVisibilityChange()
 	self.targets.Canvas.SetActive(GameManager.hudPlayerEnabled)
+end
+
+function EnhancedHealth:Heartbeat()
+	if self.playerActor.health <= self.heartBeatThreshold and self.heartBeatTimer <= 0 then
+		self.heartBeatTimer = 1
+		local t = self.playerActor.health / self.heartBeatThreshold
+		self.targets.Heartbeat.volume = 1 - t
+		self.targets.Heartbeat.Play()
+	else
+		self.heartBeatTimer = self.heartBeatTimer - Time.deltaTime
+	end
 end

@@ -46,40 +46,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mutators:
   - name: Enhanced Health
-    description: Customize your health and regen. <color=red>Required</color> for
-      the <color=yellow>Stim Shot</color> to work!
+    description: 2.0.0
     menuImage: {fileID: 2800000, guid: 2d6df012035553f4496cdfbe12afa472, type: 3}
     mutatorPrefab: {fileID: 1311299373017700, guid: 4a845dbdce638ac4cbe4f5cf76afd85a, type: 3}
     configuration:
       labels:
-      - id: multiplicativeLabel
-        displayName: <color=grey>Set this to true to treat heal value as a percentage
-          of max HP instead of a flat value.</color>
-        orderPriority: 6
-      - id: multiplicativeLabel2
-        displayName: <color=grey>ex. if heal value is 5 and max hp is 200, the amount
-          healed will be 10 (200 * 0.05)</color>
-        orderPriority: 7
-      - id: stimLabel
-        displayName: <color=yellow>Stim Shot Settings</color>
-        orderPriority: 8
-      - id: stimLabel2
-        displayName: <color=grey>Approximate HP restored will be (heal multiplier
-          x duration x 10)</color>
-        orderPriority: 12
       - id: baseSettingsLabel
         displayName: <color=green>Health and Regen Settings</color>
         orderPriority: 0
+      - id: stimLabel
+        displayName: <color=yellow>Stim Shot Settings</color>
+        orderPriority: 10
       - id: uiSettings
         displayName: <color=aqua>Screen Effects</color>
-        orderPriority: 18
+        orderPriority: 20
       - id: compatSettings
         displayName: <color=magenta>Compatibility Settings</color>
-        orderPriority: 22
+        orderPriority: 30
       integers:
       - id: maxHP
         displayName: Max Health
-        orderPriority: 0
+        orderPriority: 1
         value: 100
       - id: stimOverheal
         displayName: Overheal Cap
@@ -90,14 +77,10 @@ MonoBehaviour:
         displayName: Time Before Healing
         orderPriority: 2
         value: 5
-      - id: healInterval
-        displayName: Time In Between Heals
+      - id: percentHpPerTick
+        displayName: Health % Per Tick
         orderPriority: 3
-        value: 1
-      - id: healValue
-        displayName: Amount To Heal
-        orderPriority: 4
-        value: 5
+        value: 10
       - id: stimHeal
         displayName: Heal Multiplier
         orderPriority: 11
@@ -114,53 +97,53 @@ MonoBehaviour:
         displayName: Speed Boost Duration
         orderPriority: 17
         value: 10
-      ranges: []
+      ranges:
+      - id: regenCapPercent
+        displayName: Health Regen Cap (% of max HP)
+        orderPriority: 4
+        value:
+          value: 1
+          min: 0.1
+          max: 1
+          wholeNumbers: 0
       strings: []
       bools:
       - id: doRegen
         displayName: Regen
         orderPriority: 1
         value: 1
-      - id: isPercent
-        displayName: Heal Value Is Percent
-        orderPriority: 5
-        value: 1
-      - id: doQuickAnim
-        displayName: Use Anim For <color=orange>Quick Throw</color>
-        orderPriority: 9
-        value: 0
       - id: doStimRegen
-        displayName: Stim Regen Buff
-        orderPriority: 10
+        displayName: Regen Buff
+        orderPriority: 11
         value: 1
       - id: doStimSpeedBoost
-        displayName: Stim Speed Boost Buff
+        displayName: Speed Boost Buff
         orderPriority: 15
         value: 1
       - id: doVignette
         displayName: Vignette Effect
-        orderPriority: 21
+        orderPriority: 22
         value: 1
       - id: doFadeToBlack
         displayName: Fade To Black On Death
-        orderPriority: 20
+        orderPriority: 24
         value: 1
       - id: doStimFlash
         displayName: Stim Flash
-        orderPriority: 19
+        orderPriority: 21
         value: 1
       - id: bandageDoOverHeal
         displayName: Bandage Overheal
-        orderPriority: 23
+        orderPriority: 31
         value: 1
       - id: bandageDoSpeedBoost
         displayName: Bandage Speed Boost
-        orderPriority: 23
+        orderPriority: 32
         value: 0
       dropdowns:
       - id: vignetteStyle
         displayName: Vignette Style
-        orderPriority: 22
+        orderPriority: 23
         value:
           index: 1
           labels:
