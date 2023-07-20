@@ -35,6 +35,11 @@ function EnhancedHealth:Start()
 
 	self.dataContainer = self.gameObject.GetComponent(DataContainer)
 
+	local movementCoreObj = self.gameObject.Find("MovementCore")
+	if movementCoreObj then
+		self.movementCore = movementCoreObj.GetComponent(ScriptedBehaviour)
+	end
+
 	self.healTimer = 0
 
 	self.image = self.targets.Flash
@@ -190,10 +195,14 @@ end
 function EnhancedHealth:SpeedBoost()
 	if self.isSpeedBoosted and self.speedBoostTimer <= self.speedBoostTimer then
 		self.speedBoostTimer = self.speedBoostTimer + Time.deltaTime
-		self.playerActor.speedMultiplier = self.speedBoost
+		--self.playerActor.speedMultiplier = self.speedBoost
 		if(self.speedBoostTimer > self.speedBoostDuration) then
 			print("<color=yellow>[Enhanced Health] Speed boost over!</color>")
-			self.playerActor.speedMultiplier = 1
+			if self.movementCore then
+				self.movementCore.self:RemoveModifier(Player.actor, "StimShot")
+			else
+				self.playerActor.speedMultiplier = 1
+			end
 			self.isSpeedBoosted = false
 		end
 	end
@@ -310,7 +319,13 @@ function EnhancedHealth:onStim(doSound, doOverheal, doSpeedBoost)
 
 	if doSpeedBoost then
 		self.speedBoostTimer = 0
-		self.playerActor.speedMultiplier = self.speedBoost
+		if self.movementCore then
+			self.movementCore.self:AddModifier(Player.actor, "StimShot", self.speedBoost)
+		else
+			self.playerActor.speedMultiplier = self.speedBoost
+		end
+		
+		
 		self.isSpeedBoosted = true
 	end
 	
