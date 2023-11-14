@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mutators:
   - name: Enhanced Health
-    description: 2.0.1
+    description: 2.1.1
     menuImage: {fileID: 2800000, guid: 2d6df012035553f4496cdfbe12afa472, type: 3}
     mutatorPrefab: {fileID: 1311299373017700, guid: 4a845dbdce638ac4cbe4f5cf76afd85a, type: 3}
     configuration:
@@ -166,6 +166,7 @@ MonoBehaviour:
   - name: Stim Shot
     prefab: {fileID: 1618106653126476, guid: aed4fad5014531e43a40ac63912db3a9, type: 3}
     slot: 2
+    hidden: 0
     usableByAi: 0
     usableByAiAllowOverride: 0
     type: 5

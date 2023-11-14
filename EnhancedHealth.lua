@@ -13,25 +13,13 @@ function EnhancedHealth:Start()
 	GameEvents.onActorSpawn.AddListener(self,"onActorSpawn")
 	GameEvents.onActorDied.AddListener(self,"onActorDied")
 
-	self.healDelay = self.script.mutator.GetConfigurationFloat("healDelay")
-	self.percentHpPerTick = self.script.mutator.GetConfigurationFloat("percentHpPerTick")/100
-	self.maxHP = self.script.mutator.GetConfigurationInt("maxHP")
-	self.doRegen = self.script.mutator.GetConfigurationBool("doRegen")
-	self.doQuickAnim = false
-	self.stimHeal = self.script.mutator.GetConfigurationFloat("stimHeal")
-	self.stimDuration = self.script.mutator.GetConfigurationFloat("stimDuration")
-	self.stimOverheal = self.script.mutator.GetConfigurationInt("stimOverheal")
-	self.speedBoost = self.script.mutator.GetConfigurationFloat("speedBoost")
-	self.doSpeedBoost = self.script.mutator.GetConfigurationBool("doStimSpeedBoost")
-	self.speedBoostDuration = self.script.mutator.GetConfigurationFloat("speedBoostDuration")
+	self:ReadConfigs()
+
+	--visual configs
 	self.doVignette = self.script.mutator.GetConfigurationBool("doVignette")
 	self.doFadeToBlack = self.script.mutator.GetConfigurationBool("doFadeToBlack")
 	self.doStimFlash = self.script.mutator.GetConfigurationBool("doStimFlash")
 	self.vignetteStyle = self.script.mutator.GetConfigurationDropdown("vignetteStyle")
-	self.regenCap = self.script.mutator.GetConfigurationRange("regenCapPercent") * self.maxHP
-
-	self.bandageDoOverHeal = self.script.mutator.GetConfigurationBool("bandageDoOverHeal")
-	self.bandageDoSpeedBoost = self.script.mutator.GetConfigurationBool("bandageDoSpeedBoost")
 
 	self.dataContainer = self.gameObject.GetComponent(DataContainer)
 
@@ -43,28 +31,17 @@ function EnhancedHealth:Start()
 	self.healTimer = 0
 
 	self.image = self.targets.Flash
-
-	self.playerActor = Player.actor
-	self.playerActor.maxHealth = self.maxHP
-
-	self.HPT = self.maxHP * self.percentHpPerTick
-
+	
 	self.isStimmed = false
 	self.stimTimer = 0
 
-	self.heartBeatThreshold = self.maxHP * 0.5
-
-	
 	self.speedBoostTimer = 0
 	self.isSpeedBoosted = false
 
-	self.overHealMax = self.maxHP + self.stimOverheal
-	self.overHealCap = self.overHealMax
-	self.stimHealAmount = self.stimHeal * self.stimDuration * 10
-	self.stimHealPerSecond = self.stimHeal * 10
+	self:InitStats()
 
-	print("<color=green>[Enhanced Health] Stims will heal " .. self.stimHealAmount .. " health points</color>")
-	print("<color=green>[Enhanced Health] Set player max health to " .. self.maxHP .. " HP</color>")
+	--print("<color=green>[Enhanced Health] Stims will heal " .. self.stimHealAmount .. " health points</color>")
+	--print("<color=green>[Enhanced Health] Set player max health to " .. self.maxHP .. " HP</color>")
 	
 	self.targets.AudioSource.SetOutputAudioMixer(AudioMixer.FirstPerson)
 	self.targets.Heartbeat.SetOutputAudioMixer(AudioMixer.FirstPerson)
@@ -96,7 +73,56 @@ function EnhancedHealth:Start()
 	self.script.AddValueMonitor("monitorHUDVisibility", "onHUDVisibilityChange")
 end
 
+function EnhancedHealth:InitStats()
+	self.playerActor = Player.actor
+	self.playerActor.maxHealth = self.maxHP
+	self.HPT = self.maxHP * self.percentHpPerTick
 
+	self.overHealMax = self.maxHP + self.stimOverheal
+	self.overHealCap = self.overHealMax
+	self.stimHealAmount = self.stimHeal * self.stimDuration * 10
+	self.stimHealPerSecond = self.stimHeal * 10
+
+	self.heartBeatThreshold = self.maxHP * 0.5
+end
+
+function EnhancedHealth:ReadConfigs()
+	if self.overrideConfigs then return end
+
+	self.healDelay = self.script.mutator.GetConfigurationFloat("healDelay")
+	self.percentHpPerTick = self.script.mutator.GetConfigurationFloat("percentHpPerTick")/100
+	self.maxHP = self.script.mutator.GetConfigurationInt("maxHP")
+	self.doRegen = self.script.mutator.GetConfigurationBool("doRegen")
+	self.doQuickAnim = false
+	self.stimHeal = self.script.mutator.GetConfigurationFloat("stimHeal")
+	self.stimDuration = self.script.mutator.GetConfigurationFloat("stimDuration")
+	self.stimOverheal = self.script.mutator.GetConfigurationInt("stimOverheal")
+	self.speedBoost = self.script.mutator.GetConfigurationFloat("speedBoost")
+	self.doSpeedBoost = self.script.mutator.GetConfigurationBool("doStimSpeedBoost")
+	self.speedBoostDuration = self.script.mutator.GetConfigurationFloat("speedBoostDuration")
+	self.regenCap = self.script.mutator.GetConfigurationRange("regenCapPercent") * self.maxHP
+	self.bandageDoOverHeal = self.script.mutator.GetConfigurationBool("bandageDoOverHeal")
+	self.bandageDoSpeedBoost = self.script.mutator.GetConfigurationBool("bandageDoSpeedBoost")
+end
+
+function EnhancedHealth:OverrideConfigs(config)
+	self.healDelay = config.healDelay
+	self.percentHpPerTick = config.percentHpPerTick
+	self.maxHP = config.maxHP
+	self.doRegen = config.doRegen
+	self.doQuickAnim = false
+	self.stimHeal = config.stimHeal
+	self.stimDuration = config.stimDuration
+	self.stimOverheal = config.stimOverheal
+	self.speedBoost = config.speedBoost
+	self.doSpeedBoost = config.doSpeedBoost
+	self.speedBoostDuration = config.speedBoostDuration
+	self.regenCap = config.regenCapPercent * self.maxHP
+	self.bandageDoOverHeal = config.bandageDoOverHeal
+	self.bandageDoSpeedBoost = config.bandageDoSpeedBoost
+
+	self:InitStats()
+end
 
 function EnhancedHealth:Update()
 	-- Run every frame
