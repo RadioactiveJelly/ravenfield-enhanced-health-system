@@ -9,7 +9,16 @@ end
 
 function EnhancedHealth:Start()
 	-- Run when behaviour is created
-	Player.actor.onTakeDamage.AddListener(self,"onTakeDamage")
+	local damageSystemObj = self.gameObject.Find("DamageCore")
+	if damageSystemObj then
+		self.damageSystem = damageSystemObj.GetComponent(ScriptedBehaviour)
+		local function postCalc(actor, source, info)
+			self:OnPostDamageCalculation(actor,source,info)
+		end
+		self.damageSystem.self:AddListener("PostCalculation", Player.actor, self,postCalc)
+	else
+		Player.actor.onTakeDamage.AddListener(self,"onTakeDamage")
+	end
 	GameEvents.onActorSpawn.AddListener(self,"onActorSpawn")
 	GameEvents.onActorDied.AddListener(self,"onActorDied")
 
@@ -39,9 +48,6 @@ function EnhancedHealth:Start()
 	self.isSpeedBoosted = false
 
 	self:InitStats()
-
-	--print("<color=green>[Enhanced Health] Stims will heal " .. self.stimHealAmount .. " health points</color>")
-	--print("<color=green>[Enhanced Health] Set player max health to " .. self.maxHP .. " HP</color>")
 	
 	self.targets.AudioSource.SetOutputAudioMixer(AudioMixer.FirstPerson)
 	self.targets.Heartbeat.SetOutputAudioMixer(AudioMixer.FirstPerson)
@@ -107,7 +113,7 @@ end
 
 function EnhancedHealth:OverrideConfigs(config)
 	self.healDelay = config.healDelay
-	self.percentHpPerTick = config.percentHpPerTick
+	self.percentHpPerTick = config.percentHpPerTick/100
 	self.maxHP = config.maxHP
 	self.doRegen = config.doRegen
 	self.doQuickAnim = false
@@ -194,7 +200,32 @@ function EnhancedHealth:onTakeDamage(actor,source,info)
 	end
 end
 
+function EnhancedHealth:OnPostDamageCalculation(actor,source,info)
+	self.healTimer = 0
+	self.healIntervalTimer = 0
+
+	local healthAfterEvent = self.playerActor.health - info.healthDamage
+	local balanceAfterEvent = self.playerActor.balance - info.balanceDamage
+	
+	if(self.doVignette) then
+		local scale = 1 - (healthAfterEvent/self.maxHP)
+		scale = Mathf.Clamp(scale,0,1);
+		self:updateVignette(scale)
+	end
+
+	--If health after this event is lower than true max HP, set current max HP to true max HP
+	if(healthAfterEvent <= self.maxHP and self.playerActor.maxHealth > self.maxHP) then
+		self.playerActor.maxHealth = self.maxHP
+	end
+
+	if(balanceAfterEvent <= 100 and self.playerActor.maxBalance == 200) then
+		self.playerActor.maxBalance = 100
+	end
+end
+
 function EnhancedHealth:HealthRegen()
+	if Player.actor.isFallenOver then return end
+
 	if self.doRegen then
 		if(self.healTimer > self.healDelay and self.playerActor.health < self.regenCap) then
 			self.playerActor.health = self.playerActor.health + (self.HPT * Time.deltaTime)
