@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mutators:
   - name: Enhanced Health
-    description: 3.0.0
+    description: 3.1.1
     menuImage: {fileID: 2800000, guid: 2d6df012035553f4496cdfbe12afa472, type: 3}
     mutatorPrefab: {fileID: 1311299373017700, guid: 4a845dbdce638ac4cbe4f5cf76afd85a, type: 3}
     configuration:
@@ -57,12 +57,15 @@ MonoBehaviour:
       - id: stimLabel
         displayName: <color=yellow>Stim Shot Settings</color>
         orderPriority: 10
+      - id: balanceSettings
+        displayName: <color=orange>Balance Settings</color>
+        orderPriority: 20
       - id: uiSettings
         displayName: <color=aqua>Screen Effects</color>
-        orderPriority: 20
+        orderPriority: 30
       - id: compatSettings
         displayName: <color=magenta>Compatibility Settings</color>
-        orderPriority: 30
+        orderPriority: 40
       integers:
       - id: maxHP
         displayName: Max Health
@@ -71,6 +74,10 @@ MonoBehaviour:
       - id: stimOverheal
         displayName: Overheal Cap
         orderPriority: 13
+        value: 100
+      - id: maxBalance
+        displayName: Max Balance
+        orderPriority: 21
         value: 100
       floats:
       - id: healDelay
@@ -122,28 +129,32 @@ MonoBehaviour:
         value: 1
       - id: doVignette
         displayName: Vignette Effect
-        orderPriority: 22
+        orderPriority: 32
         value: 1
       - id: doFadeToBlack
         displayName: Fade To Black On Death
-        orderPriority: 24
+        orderPriority: 34
         value: 1
       - id: doStimFlash
         displayName: Stim Flash
-        orderPriority: 21
+        orderPriority: 31
         value: 1
       - id: bandageDoOverHeal
         displayName: Bandage Overheal
-        orderPriority: 31
+        orderPriority: 41
         value: 1
       - id: bandageDoSpeedBoost
         displayName: Bandage Speed Boost
-        orderPriority: 32
+        orderPriority: 42
         value: 0
+      - id: doColorGrading
+        displayName: Low HP Color Grading
+        orderPriority: 35
+        value: 1
       dropdowns:
       - id: vignetteStyle
         displayName: Vignette Style
-        orderPriority: 23
+        orderPriority: 33
         value:
           index: 1
           labels:

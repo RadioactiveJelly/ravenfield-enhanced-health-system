@@ -29,6 +29,7 @@ function EnhancedHealth:Start()
 	self.doFadeToBlack = self.script.mutator.GetConfigurationBool("doFadeToBlack")
 	self.doStimFlash = self.script.mutator.GetConfigurationBool("doStimFlash")
 	self.vignetteStyle = self.script.mutator.GetConfigurationDropdown("vignetteStyle")
+	self.doColorGrading = self.script.mutator.GetConfigurationBool("doColorGrading")
 
 	self.dataContainer = self.gameObject.GetComponent(DataContainer)
 
@@ -68,6 +69,10 @@ function EnhancedHealth:Start()
 	self.targets.FadeToBlack.gameObject.SetActive(self.doFadeToBlack)
 	self.targets.Vignette.gameObject.SetActive(self.doVignette)
 	self.image.gameObject.SetActive(self.doStimFlash)
+
+	self.colorGradeCurve = self.dataContainer.GetAnimationCurve("ColorGradingCurve")
+
+	self.targets.LowHealthEffect.gameObject.SetActive(self.doColorGrading)
 
 	self.startFade = false
 
@@ -109,6 +114,7 @@ function EnhancedHealth:ReadConfigs()
 	self.regenCap = self.script.mutator.GetConfigurationRange("regenCapPercent") * self.maxHP
 	self.bandageDoOverHeal = self.script.mutator.GetConfigurationBool("bandageDoOverHeal")
 	self.bandageDoSpeedBoost = self.script.mutator.GetConfigurationBool("bandageDoSpeedBoost")
+	self.maxBalance = self.script.mutator.GetConfigurationInt("maxBalance")
 end
 
 function EnhancedHealth:OverrideConfigs(config)
@@ -126,6 +132,9 @@ function EnhancedHealth:OverrideConfigs(config)
 	self.regenCap = config.regenCapPercent * self.maxHP
 	self.bandageDoOverHeal = config.bandageDoOverHeal
 	self.bandageDoSpeedBoost = config.bandageDoSpeedBoost
+	self.maxBalance = config.maxBalance
+
+	print(self.maxBalance)
 
 	self:InitStats()
 end
@@ -135,7 +144,7 @@ function EnhancedHealth:Update()
 	if self.playerActor and self.playerActor.isDead == false then
 
 		--[[if(Input.GetKeyDown(KeyCode.T)) then
-			Player.actor.damage(Player.actor,75,0, false ,false)
+			Player.actor.damage(Player.actor,10,0, false ,false)
 		end]]--
 
 		if SpawnUi.isOpen and not self.isSpawnUiOpen then
@@ -156,10 +165,19 @@ function EnhancedHealth:Update()
 		if(self.doVignette) then
 			local scale = 1 - (self.playerActor.health/self.maxHP)
 			scale = Mathf.Clamp(scale,0,1);
+			if scale > 0 then
+				local pingPong = Mathf.PingPong(Time.time * 0.25,0.25)
+				scale = scale + pingPong
+			end
 			self:updateVignette(scale)
 		end
 	elseif self.doFadeToBlack and self.playerActor and self.playerActor.isDead and self.hasSpawned and self.startFade then
 		self:FadeToBlack(0.30)
+	end
+
+	if Player.actor and self.doColorGrading then
+		local intensity = self.colorGradeCurve.Evaluate(1 - Player.actor.health/self.maxHP)
+		self.targets.LowHealthEffect.SetFloat("HealthScale", intensity)
 	end
 end
 
@@ -195,8 +213,8 @@ function EnhancedHealth:onTakeDamage(actor,source,info)
 		self.playerActor.maxHealth = self.maxHP
 	end
 
-	if(balanceAfterEvent <= 100 and self.playerActor.maxBalance == 200) then
-		self.playerActor.maxBalance = 100
+	if(balanceAfterEvent <= self.maxBalance and self.playerActor.maxBalance == self.maxBalance * 2) then
+		self.playerActor.maxBalance = self.maxBalance
 	end
 end
 
@@ -218,8 +236,8 @@ function EnhancedHealth:OnPostDamageCalculation(actor,source,info)
 		self.playerActor.maxHealth = self.maxHP
 	end
 
-	if(balanceAfterEvent <= 100 and self.playerActor.maxBalance == 200) then
-		self.playerActor.maxBalance = 100
+	if(balanceAfterEvent <= self.maxBalance and self.playerActor.maxBalance == self.maxBalance * 2) then
+		self.playerActor.maxBalance = self.maxBalance
 	end
 end
 
@@ -270,7 +288,7 @@ function EnhancedHealth:onActorSpawn(actor)
 		self.healTimer = 0
 		self.healIntervalTimer = 0
 		self.playerActor.health = self.maxHP
-		self.playerActor.maxBalance = 100
+		self.playerActor.maxBalance = self.maxBalance
 		if(self.doVignette) then
 			self:updateVignette(0)
 		end
@@ -358,8 +376,8 @@ function EnhancedHealth:onStim(doSound, doOverheal, doSpeedBoost)
 	self.isStimmed = true
 	self.stimTimer = 0
 
-	self.playerActor.maxBalance = 200
-	self.playerActor.balance = 200
+	self.playerActor.maxBalance = self.maxBalance * 2
+	self.playerActor.balance = self.maxBalance * 2
 
 	if doOverheal then
 		local healthAfterStim = self.playerActor.health + self.stimHealAmount
@@ -391,11 +409,12 @@ function EnhancedHealth:onStim(doSound, doOverheal, doSpeedBoost)
 	end
 
 	if(self.doStimFlash) then
-		self.image.CrossFadeAlpha(1,0,false)
+		--[[self.image.CrossFadeAlpha(1,0,false)
 		local color = self.image.color
 		color.a = 0.19
 		self.image.color = color
-		self.image.CrossFadeAlpha(0,1,false)
+		self.image.CrossFadeAlpha(0,1,false)]]--
+		self.targets.StimEffect.SetTrigger("Stim")
 	end
 end
 
