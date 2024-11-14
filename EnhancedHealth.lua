@@ -3,12 +3,47 @@ behaviour("EnhancedHealth")
 
 enhancedHealthInstance = nil
 
+EHSBehaviour = {actor = nil, maxHp = 0, healDelay = 0, percentHpPerTick = 0, regenCap = 0, HPT = 0}
+
+function EHSBehaviour:new(actor, maxHP, maxBalance, healDelay, percentHpPerTick, regenCap)
+	local instance = {actor = actor}
+	instance.maxHP = maxHP or 100
+	instance.healTimer = 0
+	instance.healDelay = healDelay or 2
+	instance.HPT = instance.maxHP * percentHpPerTick
+	instance.regenCap = regenCap or instance.maxHP
+	actor.maxHealth = maxHP
+	actor.maxBalance = maxBalance
+	return setmetatable(instance, {__index = EHSBehaviour})
+end
+
+function EHSBehaviour:update()
+	if self.actor.isDead then return end
+
+	if(self.healTimer > self.healDelay and self.actor.health < self.regenCap) then
+		self.actor.health = self.actor.health + (self.HPT * Time.deltaTime)
+		self.actor.health = Mathf.Clamp(self.actor.health,0, self.regenCap)
+	elseif self.healTimer <= self.healDelay and self.actor.health < self.regenCap then
+		self.healTimer = self.healTimer + Time.deltaTime
+	end
+end
+
+function EHSBehaviour:onDamage()
+	self:resetTimer()
+end
+
+function EHSBehaviour:resetTimer()
+	self.healTimer = 0
+end
+
 function EnhancedHealth:Awake()
 	self.gameObject.name = "EnhancedHealth"
 end
 
 function EnhancedHealth:Start()
 	-- Run when behaviour is created
+	self:ReadConfigs()
+
 	local damageSystemObj = self.gameObject.Find("DamageCore")
 	if damageSystemObj then
 		self.damageSystem = damageSystemObj.GetComponent(ScriptedBehaviour)
@@ -16,13 +51,30 @@ function EnhancedHealth:Start()
 			self:OnPostDamageCalculation(actor,source,info)
 		end
 		self.damageSystem.self:AddListener("PostCalculation", Player.actor, self,postCalc)
+		if self.affectsBots then
+			for i = 1, #ActorManager.actors, 1 do
+				local actor = ActorManager.actors[i]
+				if not actor.isPlayer then
+					self.damageSystem.self:AddListener("PostCalculation", actor, self,postCalc)
+				end
+			end
+		end
 	else
 		Player.actor.onTakeDamage.AddListener(self,"onTakeDamage")
+		if self.affectsBots then
+			for i = 1, #ActorManager.actors, 1 do
+				local actor = ActorManager.actors[i]
+				if not actor.isPlayer then
+					actor.onTakeDamage.AddListener(self,"onTakeDamage")
+				end
+				
+			end
+		end
 	end
 	GameEvents.onActorSpawn.AddListener(self,"onActorSpawn")
 	GameEvents.onActorDied.AddListener(self,"onActorDied")
 
-	self:ReadConfigs()
+	
 
 	--visual configs
 	self.doVignette = self.script.mutator.GetConfigurationBool("doVignette")
@@ -30,6 +82,7 @@ function EnhancedHealth:Start()
 	self.doStimFlash = self.script.mutator.GetConfigurationBool("doStimFlash")
 	self.vignetteStyle = self.script.mutator.GetConfigurationDropdown("vignetteStyle")
 	self.doColorGrading = self.script.mutator.GetConfigurationBool("doColorGrading")
+	self.colorGradingIntensity = self.script.mutator.GetConfigurationRange("colorGradingIntensity")
 
 	self.dataContainer = self.gameObject.GetComponent(DataContainer)
 
@@ -82,6 +135,11 @@ function EnhancedHealth:Start()
 
 	enhancedHealthInstance = self
 	self.script.AddValueMonitor("monitorHUDVisibility", "onHUDVisibilityChange")
+
+	self.botBehaviours = {}
+	self.botDictionary = {}
+
+	self.allowRegen = true
 end
 
 function EnhancedHealth:InitStats()
@@ -115,6 +173,14 @@ function EnhancedHealth:ReadConfigs()
 	self.bandageDoOverHeal = self.script.mutator.GetConfigurationBool("bandageDoOverHeal")
 	self.bandageDoSpeedBoost = self.script.mutator.GetConfigurationBool("bandageDoSpeedBoost")
 	self.maxBalance = self.script.mutator.GetConfigurationInt("maxBalance")
+
+	--Bots
+	self.affectsBots = self.script.mutator.GetConfigurationBool("affectsBots")
+	self.botMaxHealth = self.script.mutator.GetConfigurationInt("botMaxHp")
+	self.botMaxBalance = self.script.mutator.GetConfigurationInt("botMaxBalance")
+	self.botHealDelay = self.script.mutator.GetConfigurationFloat("botHealDelay")
+	self.botPercentHpPerTick = self.script.mutator.GetConfigurationFloat("botPercentHpPerTick")/100
+	self.botRegenCap = self.script.mutator.GetConfigurationRange("botRegenCapPercent") * self.botMaxHealth
 end
 
 function EnhancedHealth:OverrideConfigs(config)
@@ -134,7 +200,13 @@ function EnhancedHealth:OverrideConfigs(config)
 	self.bandageDoSpeedBoost = config.bandageDoSpeedBoost
 	self.maxBalance = config.maxBalance
 
-	print(self.maxBalance)
+	self.affectsBots = config.affectsBots or false
+	self.botMaxHealth = config.botMaxHealth or 100
+	self.botMaxBalance = config.botMaxBalance or 100
+	self.botHealDelay = config.botHealDelay or 2
+	self.botPercentHpPerTick = config.botPercentHpPerTick or 10
+	self.botRegenCap = config.botMaxHealth or 100
+	
 
 	self:InitStats()
 end
@@ -144,7 +216,7 @@ function EnhancedHealth:Update()
 	if self.playerActor and self.playerActor.isDead == false then
 
 		--[[if(Input.GetKeyDown(KeyCode.T)) then
-			Player.actor.damage(Player.actor,10,0, false ,false)
+			Player.actor.damage(Player.actor,5,0, false ,false)
 		end]]--
 
 		if SpawnUi.isOpen and not self.isSpawnUiOpen then
@@ -162,21 +234,21 @@ function EnhancedHealth:Update()
 			self.playerActor.maxHealth = self.playerActor.health
 			self.playerActor.maxHealth = Mathf.Clamp(self.playerActor.maxHealth, self.maxHP , self.overHealCap)
 		end
-		if(self.doVignette) then
-			local scale = 1 - (self.playerActor.health/self.maxHP)
+		if self.doVignette then
+			local scale = self.playerActor.health/self.maxHP
 			scale = Mathf.Clamp(scale,0,1);
-			if scale > 0 then
+			if scale < 1 then
 				local pingPong = Mathf.PingPong(Time.time * 0.25,0.25)
 				scale = scale + pingPong
 			end
 			self:updateVignette(scale)
 		end
 	elseif self.doFadeToBlack and self.playerActor and self.playerActor.isDead and self.hasSpawned and self.startFade then
-		self:FadeToBlack(0.30)
+		self:FadeToBlack(0.3)
 	end
 
-	if Player.actor and self.doColorGrading then
-		local intensity = self.colorGradeCurve.Evaluate(1 - Player.actor.health/self.maxHP)
+	if Player.actor and self.doColorGrading and not Player.actor.isDead then
+		local intensity = self.colorGradeCurve.Evaluate(1 - Player.actor.health/self.maxHP) * self.colorGradingIntensity
 		self.targets.LowHealthEffect.SetFloat("HealthScale", intensity)
 	end
 end
@@ -187,12 +259,20 @@ end
 
 function EnhancedHealth:updateVignette(scale)
 	local color = self.targets.Vignette.color
-	color.a = scale
+	color.a = 1 - scale
 	self.targets.Vignette.color = color
 end
 
 function EnhancedHealth:onTakeDamage(actor,source,info)
 	if(CurrentEvent.isConsumed) then
+		return
+	end
+
+	if not actor.isPlayer then
+		local botBehaviour = self.botDictionary[actor.actorIndex]
+		if botBehaviour then
+			botBehaviour:onDamage()
+		end
 		return
 	end
 	
@@ -203,7 +283,7 @@ function EnhancedHealth:onTakeDamage(actor,source,info)
 	local balanceAfterEvent = self.playerActor.balance - info.balanceDamage
 	
 	if(self.doVignette) then
-		local scale = 1 - (healthAfterEvent/self.maxHP)
+		local scale = healthAfterEvent/self.maxHP
 		scale = Mathf.Clamp(scale,0,1);
 		self:updateVignette(scale)
 	end
@@ -216,9 +296,19 @@ function EnhancedHealth:onTakeDamage(actor,source,info)
 	if(balanceAfterEvent <= self.maxBalance and self.playerActor.maxBalance == self.maxBalance * 2) then
 		self.playerActor.maxBalance = self.maxBalance
 	end
+
+	self.targets.DamageEffect.SetTrigger("Damage")
 end
 
 function EnhancedHealth:OnPostDamageCalculation(actor,source,info)
+	if not actor.isPlayer then
+		local botBehaviour = self.botDictionary[actor.actorIndex]
+		if botBehaviour then
+			botBehaviour:onDamage()
+		end
+		return
+	end
+
 	self.healTimer = 0
 	self.healIntervalTimer = 0
 
@@ -226,7 +316,7 @@ function EnhancedHealth:OnPostDamageCalculation(actor,source,info)
 	local balanceAfterEvent = self.playerActor.balance - info.balanceDamage
 	
 	if(self.doVignette) then
-		local scale = 1 - (healthAfterEvent/self.maxHP)
+		local scale = healthAfterEvent/self.maxHP
 		scale = Mathf.Clamp(scale,0,1);
 		self:updateVignette(scale)
 	end
@@ -239,17 +329,28 @@ function EnhancedHealth:OnPostDamageCalculation(actor,source,info)
 	if(balanceAfterEvent <= self.maxBalance and self.playerActor.maxBalance == self.maxBalance * 2) then
 		self.playerActor.maxBalance = self.maxBalance
 	end
+
+	self.targets.DamageEffect.SetTrigger("Damage")
 end
 
 function EnhancedHealth:HealthRegen()
 	if Player.actor.isFallenOver then return end
 
-	if self.doRegen then
+	if self.doRegen and self.allowRegen then
 		if(self.healTimer > self.healDelay and self.playerActor.health < self.regenCap) then
 			self.playerActor.health = self.playerActor.health + (self.HPT * Time.deltaTime)
-			self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.maxHP)
-		elseif self.healTimer <= self.healDelay and self.playerActor.health < self.maxHP then
+			self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.regenCap)
+		elseif self.healTimer <= self.healDelay and self.playerActor.health < self.regenCap then
 			self.healTimer = self.healTimer + (1 * Time.deltaTime)
+		end
+
+		if self.affectsBots then
+			for i = 1, #self.botBehaviours, 1 do
+				local botBehaviour = self.botBehaviours[i]
+				if botBehaviour then
+					botBehaviour:update()
+				end
+			end
 		end
 	end
 
@@ -289,21 +390,22 @@ function EnhancedHealth:onActorSpawn(actor)
 		self.healIntervalTimer = 0
 		self.playerActor.health = self.maxHP
 		self.playerActor.maxBalance = self.maxBalance
-		if(self.doVignette) then
-			self:updateVignette(0)
-		end
 
-		if(self.doFadeToBlack) then
-			local color = self.targets.FadeToBlack.color
-			color.a = 0
-			self.targets.FadeToBlack.color = color
-			self.fadeAlpha = 0
-		end
+		self:ClearScreenEffects()
 
 		self:EvaluateLoadout()
 
 		self.hasSpawned = true
 		self.startFade = false
+	elseif not actor.isPlayer and self.affectsBots then
+		local behaviour = self.botDictionary[actor.actorIndex]
+		if behaviour == nil then 
+			behaviour = EHSBehaviour:new(actor, self.botMaxHealth, self.botMaxBalance, self.botHealDelay, self.botPercentHpPerTick,self.botRegenCap)
+			table.insert(self.botBehaviours, 1, behaviour)
+			self.botDictionary[actor.actorIndex] = behaviour
+		else
+			behaviour:resetTimer()
+		end
 	end
 end
 
@@ -331,7 +433,11 @@ function EnhancedHealth:onActorDied(actor,source,isSilent)
 		self.playerActor.speedMultiplier = 1
 		self.isStimmed = false
 		if(self.doVignette) then
-			self:updateVignette(1)
+			self:updateVignette(0)
+		end
+
+		if self.doColorGrading then
+			self.targets.LowHealthEffect.SetFloat("HealthScale", 1)
 		end
 
 		local color = self.image.color
@@ -409,11 +515,6 @@ function EnhancedHealth:onStim(doSound, doOverheal, doSpeedBoost)
 	end
 
 	if(self.doStimFlash) then
-		--[[self.image.CrossFadeAlpha(1,0,false)
-		local color = self.image.color
-		color.a = 0.19
-		self.image.color = color
-		self.image.CrossFadeAlpha(0,1,false)]]--
 		self.targets.StimEffect.SetTrigger("Stim")
 	end
 end
@@ -435,4 +536,13 @@ function EnhancedHealth:Heartbeat()
 	else
 		self.heartBeatTimer = self.heartBeatTimer - Time.deltaTime
 	end
+end
+
+function EnhancedHealth:ClearScreenEffects()
+	self.startFade = false
+	local color = self.targets.FadeToBlack.color
+	color.a = 0
+	self.targets.FadeToBlack.color = color
+	self:updateVignette(1)
+	self.targets.LowHealthEffect.SetFloat("HealthScale", 0)
 end

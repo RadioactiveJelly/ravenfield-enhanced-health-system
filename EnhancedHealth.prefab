@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mutators:
   - name: Enhanced Health
-    description: 3.1.1
+    description: 4.0.1
     menuImage: {fileID: 2800000, guid: 2d6df012035553f4496cdfbe12afa472, type: 3}
     mutatorPrefab: {fileID: 1311299373017700, guid: 4a845dbdce638ac4cbe4f5cf76afd85a, type: 3}
     configuration:
@@ -63,9 +63,12 @@ MonoBehaviour:
       - id: uiSettings
         displayName: <color=aqua>Screen Effects</color>
         orderPriority: 30
+      - id: botSettings
+        displayName: <color=red>Bot Settings</color>
+        orderPriority: 40
       - id: compatSettings
         displayName: <color=magenta>Compatibility Settings</color>
-        orderPriority: 40
+        orderPriority: 50
       integers:
       - id: maxHP
         displayName: Max Health
@@ -78,6 +81,14 @@ MonoBehaviour:
       - id: maxBalance
         displayName: Max Balance
         orderPriority: 21
+        value: 100
+      - id: botMaxHp
+        displayName: Max Health
+        orderPriority: 42
+        value: 100
+      - id: botMaxBalance
+        displayName: Max Balance
+        orderPriority: 43
         value: 100
       floats:
       - id: healDelay
@@ -104,10 +115,34 @@ MonoBehaviour:
         displayName: Speed Boost Duration
         orderPriority: 17
         value: 10
+      - id: botHealDelay
+        displayName: Time Before Healing
+        orderPriority: 44
+        value: 5
+      - id: botPercentHpPerTick
+        displayName: Health % Per Tick
+        orderPriority: 45
+        value: 10
       ranges:
       - id: regenCapPercent
         displayName: Health Regen Cap (% of max HP)
         orderPriority: 4
+        value:
+          value: 1
+          min: 0.1
+          max: 1
+          wholeNumbers: 0
+      - id: botRegenCapPercent
+        displayName: Health Regen Cap (% of max HP)
+        orderPriority: 46
+        value:
+          value: 1
+          min: 0.1
+          max: 1
+          wholeNumbers: 0
+      - id: colorGradingIntensity
+        displayName: Color Grading Intensity
+        orderPriority: 36
         value:
           value: 1
           min: 0.1
@@ -141,16 +176,20 @@ MonoBehaviour:
         value: 1
       - id: bandageDoOverHeal
         displayName: Bandage Overheal
-        orderPriority: 41
+        orderPriority: 51
         value: 1
       - id: bandageDoSpeedBoost
         displayName: Bandage Speed Boost
-        orderPriority: 42
+        orderPriority: 52
         value: 0
       - id: doColorGrading
         displayName: Low HP Color Grading
         orderPriority: 35
         value: 1
+      - id: affectsBots
+        displayName: Affects Bots
+        orderPriority: 41
+        value: 0
       dropdowns:
       - id: vignetteStyle
         displayName: Vignette Style

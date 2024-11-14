@@ -109,6 +109,7 @@ Transform:
   - {fileID: 6688064215159142235}
   - {fileID: 8257264008271588077}
   - {fileID: 96608742950699104}
+  - {fileID: 4738625047642710954}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -143,6 +144,8 @@ MonoBehaviour:
     value: {fileID: 8728972995669114589}
   - name: LowHealthEffect
     value: {fileID: 2514121767752177969}
+  - name: DamageEffect
+    value: {fileID: 3840437093958762740}
 --- !u!114 &114869938256752128
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,27 +183,27 @@ MonoBehaviour:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 1
-        inSlope: -0.49710083
-        outSlope: -0.49710083
+        value: 0
+        inSlope: 0
+        outSlope: 0
         tangentMode: 34
         weightedMode: 0
         inWeight: 0
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 0.5
-        value: 0.7514496
-        inSlope: -0.7669306
-        outSlope: -0.7669306
+        time: 0.3
+        value: 0
+        inSlope: 0.011049008
+        outSlope: 0.011049008
         tangentMode: 0
         weightedMode: 0
-        inWeight: 0.037968848
-        outWeight: 0.33333334
+        inWeight: 0.33333334
+        outWeight: 0.06699896
       - serializedVersion: 3
-        time: 0.9904889
-        value: -0.01005343
-        inSlope: -1.5525389
-        outSlope: -1.5525389
+        time: 1
+        value: 1
+        inSlope: 1.4285715
+        outSlope: 1.4285715
         tangentMode: 34
         weightedMode: 0
         inWeight: 0.33333334
@@ -497,7 +500,7 @@ GameObject:
   - component: {fileID: 224843370392538592}
   - component: {fileID: 222331819885656874}
   - component: {fileID: 114341292707593458}
-  m_Layer: 0
+  m_Layer: 28
   m_Name: Vignette
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -636,6 +639,76 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &1374571499955712213
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4738625047642710954}
+  - component: {fileID: 7508356308622341443}
+  - component: {fileID: 3840437093958762740}
+  m_Layer: 28
+  m_Name: DamageEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4738625047642710954
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374571499955712213}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 145, y: 65.138885, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 4620438825000102}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7508356308622341443
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374571499955712213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b9a305e18de0c04dbd257a21cd47087, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sharedProfile: {fileID: 11400000, guid: 6d0037f9037aa4d45b95da29ad5de7e0, type: 2}
+  isGlobal: 1
+  blendDistance: 0
+  weight: 0
+  priority: 0
+--- !u!95 &3840437093958762740
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1374571499955712213}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 9e6ce04f8434dcd4c84aeaf419730be1, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &3264078608201367583
 GameObject:
   m_ObjectHideFlags: 0
@@ -684,7 +757,7 @@ MonoBehaviour:
   isGlobal: 1
   blendDistance: 0
   weight: 0
-  priority: 0
+  priority: 15
 --- !u!95 &8728972995669114589
 Animator:
   serializedVersion: 5
