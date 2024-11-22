@@ -3,86 +3,23 @@ behaviour("EnhancedHealth")
 
 enhancedHealthInstance = nil
 
-EHSBehaviour = {actor = nil, maxHp = 0, healDelay = 0, percentHpPerTick = 0, regenCap = 0, HPT = 0}
-
-function EHSBehaviour:new(actor, maxHP, maxBalance, healDelay, percentHpPerTick, regenCap)
-	local instance = {actor = actor}
-	instance.maxHP = maxHP or 100
-	instance.healTimer = 0
-	instance.healDelay = healDelay or 2
-	instance.HPT = instance.maxHP * percentHpPerTick
-	instance.regenCap = regenCap or instance.maxHP
-	actor.maxHealth = maxHP
-	actor.maxBalance = maxBalance
-	return setmetatable(instance, {__index = EHSBehaviour})
-end
-
-function EHSBehaviour:update()
-	if self.actor.isDead then return end
-
-	if(self.healTimer > self.healDelay and self.actor.health < self.regenCap) then
-		self.actor.health = self.actor.health + (self.HPT * Time.deltaTime)
-		self.actor.health = Mathf.Clamp(self.actor.health,0, self.regenCap)
-	elseif self.healTimer <= self.healDelay and self.actor.health < self.regenCap then
-		self.healTimer = self.healTimer + Time.deltaTime
-	end
-end
-
-function EHSBehaviour:onDamage()
-	self:resetTimer()
-end
-
-function EHSBehaviour:resetTimer()
-	self.healTimer = 0
-end
-
 function EnhancedHealth:Awake()
 	self.gameObject.name = "EnhancedHealth"
 end
 
-function EnhancedHealth:Start()
-	-- Run when behaviour is created
-	self:ReadConfigs()
+function EnhancedHealth:Init(config)
+	self:SetConfig(config)
 
 	local damageSystemObj = self.gameObject.Find("DamageCore")
 	if damageSystemObj then
 		self.damageSystem = damageSystemObj.GetComponent(ScriptedBehaviour)
-		local function postCalc(actor, source, info)
-			self:OnPostDamageCalculation(actor,source,info)
-		end
-		self.damageSystem.self:AddListener("PostCalculation", Player.actor, self,postCalc)
-		if self.affectsBots then
-			for i = 1, #ActorManager.actors, 1 do
-				local actor = ActorManager.actors[i]
-				if not actor.isPlayer then
-					self.damageSystem.self:AddListener("PostCalculation", actor, self,postCalc)
-				end
-			end
-		end
+		self.damageSystem.self:AddListener("PostCalculation", Player.actor, self,self:OnPostDamageCalculation())
 	else
 		Player.actor.onTakeDamage.AddListener(self,"onTakeDamage")
-		if self.affectsBots then
-			for i = 1, #ActorManager.actors, 1 do
-				local actor = ActorManager.actors[i]
-				if not actor.isPlayer then
-					actor.onTakeDamage.AddListener(self,"onTakeDamage")
-				end
-				
-			end
-		end
 	end
 	GameEvents.onActorSpawn.AddListener(self,"onActorSpawn")
 	GameEvents.onActorDied.AddListener(self,"onActorDied")
 
-	
-
-	--visual configs
-	self.doVignette = self.script.mutator.GetConfigurationBool("doVignette")
-	self.doFadeToBlack = self.script.mutator.GetConfigurationBool("doFadeToBlack")
-	self.doStimFlash = self.script.mutator.GetConfigurationBool("doStimFlash")
-	self.vignetteStyle = self.script.mutator.GetConfigurationDropdown("vignetteStyle")
-	self.doColorGrading = self.script.mutator.GetConfigurationBool("doColorGrading")
-	self.colorGradingIntensity = self.script.mutator.GetConfigurationRange("colorGradingIntensity")
 
 	self.dataContainer = self.gameObject.GetComponent(DataContainer)
 
@@ -136,10 +73,9 @@ function EnhancedHealth:Start()
 	enhancedHealthInstance = self
 	self.script.AddValueMonitor("monitorHUDVisibility", "onHUDVisibilityChange")
 
-	self.botBehaviours = {}
-	self.botDictionary = {}
-
 	self.allowRegen = true
+
+	self.version = 5
 end
 
 function EnhancedHealth:InitStats()
@@ -155,35 +91,7 @@ function EnhancedHealth:InitStats()
 	self.heartBeatThreshold = self.maxHP * 0.5
 end
 
-function EnhancedHealth:ReadConfigs()
-	if self.overrideConfigs then return end
-
-	self.healDelay = self.script.mutator.GetConfigurationFloat("healDelay")
-	self.percentHpPerTick = self.script.mutator.GetConfigurationFloat("percentHpPerTick")/100
-	self.maxHP = self.script.mutator.GetConfigurationInt("maxHP")
-	self.doRegen = self.script.mutator.GetConfigurationBool("doRegen")
-	self.doQuickAnim = false
-	self.stimHeal = self.script.mutator.GetConfigurationFloat("stimHeal")
-	self.stimDuration = self.script.mutator.GetConfigurationFloat("stimDuration")
-	self.stimOverheal = self.script.mutator.GetConfigurationInt("stimOverheal")
-	self.speedBoost = self.script.mutator.GetConfigurationFloat("speedBoost")
-	self.doSpeedBoost = self.script.mutator.GetConfigurationBool("doStimSpeedBoost")
-	self.speedBoostDuration = self.script.mutator.GetConfigurationFloat("speedBoostDuration")
-	self.regenCap = self.script.mutator.GetConfigurationRange("regenCapPercent") * self.maxHP
-	self.bandageDoOverHeal = self.script.mutator.GetConfigurationBool("bandageDoOverHeal")
-	self.bandageDoSpeedBoost = self.script.mutator.GetConfigurationBool("bandageDoSpeedBoost")
-	self.maxBalance = self.script.mutator.GetConfigurationInt("maxBalance")
-
-	--Bots
-	self.affectsBots = self.script.mutator.GetConfigurationBool("affectsBots")
-	self.botMaxHealth = self.script.mutator.GetConfigurationInt("botMaxHp")
-	self.botMaxBalance = self.script.mutator.GetConfigurationInt("botMaxBalance")
-	self.botHealDelay = self.script.mutator.GetConfigurationFloat("botHealDelay")
-	self.botPercentHpPerTick = self.script.mutator.GetConfigurationFloat("botPercentHpPerTick")/100
-	self.botRegenCap = self.script.mutator.GetConfigurationRange("botRegenCapPercent") * self.botMaxHealth
-end
-
-function EnhancedHealth:OverrideConfigs(config)
+function EnhancedHealth:SetConfig(config)
 	self.healDelay = config.healDelay
 	self.percentHpPerTick = config.percentHpPerTick/100
 	self.maxHP = config.maxHP
@@ -195,18 +103,17 @@ function EnhancedHealth:OverrideConfigs(config)
 	self.speedBoost = config.speedBoost
 	self.doSpeedBoost = config.doSpeedBoost
 	self.speedBoostDuration = config.speedBoostDuration
-	self.regenCap = config.regenCapPercent * self.maxHP
+	self.regenCap = config.regenCap * self.maxHP
 	self.bandageDoOverHeal = config.bandageDoOverHeal
 	self.bandageDoSpeedBoost = config.bandageDoSpeedBoost
 	self.maxBalance = config.maxBalance
 
-	self.affectsBots = config.affectsBots or false
-	self.botMaxHealth = config.botMaxHealth or 100
-	self.botMaxBalance = config.botMaxBalance or 100
-	self.botHealDelay = config.botHealDelay or 2
-	self.botPercentHpPerTick = config.botPercentHpPerTick or 10
-	self.botRegenCap = config.botMaxHealth or 100
-	
+	self.doVignette = config.doVignette or true
+	self.doFadeToBlack = config.doFadeToBlack or true
+	self.doStimFlash = config.doStimFlash or true
+	self.vignetteStyle = config.vignetteStyle or 1
+	self.doColorGrading = config.doColorGrading or true
+	self.colorGradingIntensity = config.colorGradingIntensity or 1
 
 	self:InitStats()
 end
@@ -268,14 +175,6 @@ function EnhancedHealth:onTakeDamage(actor,source,info)
 		return
 	end
 
-	if not actor.isPlayer then
-		local botBehaviour = self.botDictionary[actor.actorIndex]
-		if botBehaviour then
-			botBehaviour:onDamage()
-		end
-		return
-	end
-	
 	self.healTimer = 0
 	self.healIntervalTimer = 0
 
@@ -300,37 +199,31 @@ function EnhancedHealth:onTakeDamage(actor,source,info)
 	self.targets.DamageEffect.SetTrigger("Damage")
 end
 
-function EnhancedHealth:OnPostDamageCalculation(actor,source,info)
-	if not actor.isPlayer then
-		local botBehaviour = self.botDictionary[actor.actorIndex]
-		if botBehaviour then
-			botBehaviour:onDamage()
-		end
-		return
-	end
-
-	self.healTimer = 0
-	self.healIntervalTimer = 0
-
-	local healthAfterEvent = self.playerActor.health - info.healthDamage
-	local balanceAfterEvent = self.playerActor.balance - info.balanceDamage
+function EnhancedHealth:OnPostDamageCalculation()
+	return function(actor,source,info)
+		self.healTimer = 0
+		self.healIntervalTimer = 0
 	
-	if(self.doVignette) then
-		local scale = healthAfterEvent/self.maxHP
-		scale = Mathf.Clamp(scale,0,1);
-		self:updateVignette(scale)
+		local healthAfterEvent = self.playerActor.health - info.healthDamage
+		local balanceAfterEvent = self.playerActor.balance - info.balanceDamage
+		
+		if(self.doVignette) then
+			local scale = healthAfterEvent/self.maxHP
+			scale = Mathf.Clamp(scale,0,1);
+			self:updateVignette(scale)
+		end
+	
+		--If health after this event is lower than true max HP, set current max HP to true max HP
+		if(healthAfterEvent <= self.maxHP and self.playerActor.maxHealth > self.maxHP) then
+			self.playerActor.maxHealth = self.maxHP
+		end
+	
+		if(balanceAfterEvent <= self.maxBalance and self.playerActor.maxBalance == self.maxBalance * 2) then
+			self.playerActor.maxBalance = self.maxBalance
+		end
+	
+		self.targets.DamageEffect.SetTrigger("Damage")
 	end
-
-	--If health after this event is lower than true max HP, set current max HP to true max HP
-	if(healthAfterEvent <= self.maxHP and self.playerActor.maxHealth > self.maxHP) then
-		self.playerActor.maxHealth = self.maxHP
-	end
-
-	if(balanceAfterEvent <= self.maxBalance and self.playerActor.maxBalance == self.maxBalance * 2) then
-		self.playerActor.maxBalance = self.maxBalance
-	end
-
-	self.targets.DamageEffect.SetTrigger("Damage")
 end
 
 function EnhancedHealth:HealthRegen()
@@ -342,15 +235,6 @@ function EnhancedHealth:HealthRegen()
 			self.playerActor.health = Mathf.Clamp(self.playerActor.health,0, self.regenCap)
 		elseif self.healTimer <= self.healDelay and self.playerActor.health < self.regenCap then
 			self.healTimer = self.healTimer + (1 * Time.deltaTime)
-		end
-
-		if self.affectsBots then
-			for i = 1, #self.botBehaviours, 1 do
-				local botBehaviour = self.botBehaviours[i]
-				if botBehaviour then
-					botBehaviour:update()
-				end
-			end
 		end
 	end
 
@@ -397,15 +281,6 @@ function EnhancedHealth:onActorSpawn(actor)
 
 		self.hasSpawned = true
 		self.startFade = false
-	elseif not actor.isPlayer and self.affectsBots then
-		local behaviour = self.botDictionary[actor.actorIndex]
-		if behaviour == nil then 
-			behaviour = EHSBehaviour:new(actor, self.botMaxHealth, self.botMaxBalance, self.botHealDelay, self.botPercentHpPerTick,self.botRegenCap)
-			table.insert(self.botBehaviours, 1, behaviour)
-			self.botDictionary[actor.actorIndex] = behaviour
-		else
-			behaviour:resetTimer()
-		end
 	end
 end
 

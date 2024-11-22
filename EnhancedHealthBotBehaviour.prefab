@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &6460432539530479353
+--- !u!1 &5068019133924471520
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,22 +8,22 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6460432539530479355}
-  - component: {fileID: 6460432539530479352}
+  - component: {fileID: 5068019133924471527}
+  - component: {fileID: 5068019133924471526}
   m_Layer: 0
-  m_Name: EnhancedHealthMutator
+  m_Name: EnhancedHealthBotBehaviour
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6460432539530479355
+--- !u!4 &5068019133924471527
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6460432539530479353}
+  m_GameObject: {fileID: 5068019133924471520}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 145, y: 65.138885, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -31,22 +31,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6460432539530479352
+--- !u!114 &5068019133924471526
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6460432539530479353}
+  m_GameObject: {fileID: 5068019133924471520}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f8ca71ca01d2fb4098cb42abc5eceb7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  source: {fileID: 2213920135882650261, guid: 64481e1e62a8a76459beac66b46e8232, type: 3}
+  source: {fileID: 2213920135882650261, guid: 955f6435fa8b92c48875a32695c108e4, type: 3}
   behaviour: 
-  targets:
-  - name: MainBehaviour
-    value: {fileID: 1311299373017700, guid: 4a845dbdce638ac4cbe4f5cf76afd85a, type: 3}
-  - name: BotBehaviour
-    value: {fileID: 5068019133924471520, guid: b1998e9636dfd3f4d8a80f477979c422, type: 3}
+  targets: []
