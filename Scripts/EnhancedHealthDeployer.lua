@@ -1,8 +1,9 @@
 -- Register the behaviour
-behaviour("EnhancedHealthMutator")
+behaviour("EnhancedHealthDeployer")
 
-function EnhancedHealthMutator:Start()
+function EnhancedHealthDeployer:Start()
 	local mainObject = GameObject.Instantiate(self.targets.MainBehaviour)
+	local dataContainer = self.targets.DataContainer
 
 	local mainConfig =
 	{
@@ -19,8 +20,11 @@ function EnhancedHealthMutator:Start()
 		regenCap = self.script.mutator.GetConfigurationRange("regenCapPercent"),
 		bandageDoOverHeal = self.script.mutator.GetConfigurationBool("bandageDoOverHeal"),
 		bandageDoSpeedBoost = self.script.mutator.GetConfigurationBool("bandageDoSpeedBoost"),
-		maxBalance = self.script.mutator.GetConfigurationInt("maxBalance"),
-
+		maxBalance = self.script.mutator.GetConfigurationInt("maxBalance")
+	}
+	
+	local visualConfigs =
+	{
 		doVignette = self.script.mutator.GetConfigurationBool("doVignette"),
 		doFadeToBlack = self.script.mutator.GetConfigurationBool("doFadeToBlack"),
 		doStimFlash = self.script.mutator.GetConfigurationBool("doStimFlash"),
@@ -28,24 +32,7 @@ function EnhancedHealthMutator:Start()
 		doColorGrading = self.script.mutator.GetConfigurationBool("doColorGrading"),
 		colorGradingIntensity = self.script.mutator.GetConfigurationRange("colorGradingIntensity"),
 	}
-
+	
 	local mainBehaviour = mainObject.GetComponent(EnhancedHealth)
-	mainBehaviour:Init(mainConfig)
-
-	self.affectsBots = self.script.mutator.GetConfigurationBool("affectsBots")
-	if not self.affectsBots then return end
-
-	local botConfig =
-	{
-		botMaxHealth = self.script.mutator.GetConfigurationInt("botMaxHp"),
-		botMaxBalance = self.script.mutator.GetConfigurationInt("botMaxBalance"),
-		botHealDelay = self.script.mutator.GetConfigurationFloat("botHealDelay"),
-		botPercentHpPerTick = self.script.mutator.GetConfigurationFloat("botPercentHpPerTick"),
-		botRegenCap = self.script.mutator.GetConfigurationRange("botRegenCapPercent")
-	}
-
-	local botObject = GameObject.Instantiate(self.targets.BotBehaviour)
-	local botBehaviour = botObject.GetComponent(EnhancedHealthBotManager)
-	botBehaviour:Init(botConfig)
-
+	mainBehaviour:Init(mainConfig, visualConfigs)
 end

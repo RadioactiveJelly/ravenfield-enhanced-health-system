@@ -46,7 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mutators:
   - name: Enhanced Health
-    description: 5.0.0
+    description: 5.0.1
     menuImage: {fileID: 2800000, guid: 2d6df012035553f4496cdfbe12afa472, type: 3}
     mutatorPrefab: {fileID: 6460432539530479353, guid: aa5b93a35a772e64cbb9a99eb5db38ef, type: 3}
     configuration:

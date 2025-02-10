@@ -7,8 +7,9 @@ function EnhancedHealth:Awake()
 	self.gameObject.name = "EnhancedHealth"
 end
 
-function EnhancedHealth:Init(config)
+function EnhancedHealth:Init(config, visualConfigs)
 	self:SetConfig(config)
+	self:SetVisualConfigs(visualConfigs)
 
 	local damageSystemObj = self.gameObject.Find("DamageCore")
 	if damageSystemObj then
@@ -107,15 +108,49 @@ function EnhancedHealth:SetConfig(config)
 	self.bandageDoOverHeal = config.bandageDoOverHeal
 	self.bandageDoSpeedBoost = config.bandageDoSpeedBoost
 	self.maxBalance = config.maxBalance
-
-	self.doVignette = config.doVignette or true
-	self.doFadeToBlack = config.doFadeToBlack or true
-	self.doStimFlash = config.doStimFlash or true
-	self.vignetteStyle = config.vignetteStyle or 1
-	self.doColorGrading = config.doColorGrading or true
-	self.colorGradingIntensity = config.colorGradingIntensity or 1
-
+	
 	self:InitStats()
+end
+
+function EnhancedHealth:SetVisualConfigs(config)
+	if config == nil then
+		self.doVignette = true
+		self.doFadeToBlack = true
+		self.doStimFlash = true
+		self.vignetteStyle = 1
+		self.doColorGrading = true
+		self.colorGradingIntensity = 1
+
+		print("Visual configs are nil!")
+		return
+	end
+
+	if config.doVignette ~= nil then
+		self.doVignette = config.doVignette
+	else
+		self.doVignette = true
+	end
+	
+	if config.doFadeToBlack ~= nil then
+		self.doFadeToBlack = config.doFadeToBlack
+	else
+		self.doFadeToBlack = true
+	end
+
+	if config.doStimFlash ~= nil then
+		self.doStimFlash = config.doStimFlash
+	else
+		self.doStimFlash = true
+	end
+
+	if config.doColorGrading ~= nil then
+		self.doColorGrading = config.doColorGrading
+	else
+		self.doColorGrading = true
+	end
+
+	self.vignetteStyle = config.vignetteStyle or 1
+	self.colorGradingIntensity = config.colorGradingIntensity or 1
 end
 
 function EnhancedHealth:Update()
