@@ -75,6 +75,7 @@ function EnhancedHealth:Init(config, visualConfigs)
 	self.script.AddValueMonitor("monitorHUDVisibility", "onHUDVisibilityChange")
 
 	self.allowRegen = true
+	self.bandageHealPercent = 1
 
 	self.version = 5
 end
@@ -335,7 +336,20 @@ function EnhancedHealth:onBandage()
 	CurrentEvent.Consume()
 	local bandage = CurrentEvent.listenerData
 	bandage.ammo = bandage.ammo - 1
-	self:onStim(false, self.bandageDoOverHeal, self.bandageDoSpeedBoost)
+	self:InstantHeal(self.bandageHealPercent)
+end
+
+function EnhancedHealth:InstantHeal(percentRestored)
+	local healAmount = self.maxHP * percentRestored
+
+	Player.actor.health = Player.actor.health + healAmount
+	if Player.actor.health > Player.actor.maxHealth then
+		Player.actor.health = Player.actor.maxHealth
+	end
+
+	if(self.doStimFlash) then
+		self.targets.StimEffect.SetTrigger("Stim")
+	end
 end
 
 function EnhancedHealth:onActorDied(actor,source,isSilent)
